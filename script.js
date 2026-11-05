@@ -18,6 +18,33 @@
   let cols, rows, dots;
   let mouseX = -9999, mouseY = -9999;
 
+  // Dynamic wandering repeller points moving slowly around the canvas
+  const NUM_WANDERERS = 120;
+  let wanderers = [];
+
+  // Spatial binning grid for 60fps performance with 100+ wandering points
+  const BIN_SIZE = 180;
+  let binCols = 0;
+  let binRows = 0;
+  let bins = [];
+
+  function initWanderers(w, h) {
+    wanderers = [];
+    for (let i = 0; i < NUM_WANDERERS; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 0.3 + Math.random() * 0.55; // Smooth slow organic drift
+      wanderers.push({
+        x: Math.random() * (w - 80) + 40,
+        y: Math.random() * (h - 80) + 40,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        radius: 90 + Math.random() * 60,    // 90 - 150px repel radius
+        strength: 22 + Math.random() * 16,   // 22 - 38px repel strength
+        noiseOff: Math.random() * 1000
+      });
+    }
+  }
+
   function getDocHeight() {
     return Math.max(
       document.body.scrollHeight,
@@ -36,6 +63,9 @@
     canvas.style.height = h + 'px';
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     buildGrid(w, h);
+    if (wanderers.length === 0) {
+      initWanderers(w, h);
+    }
   }
 
   function buildGrid(w, h) {
@@ -51,33 +81,113 @@
         dots.push({ homeX, homeY, x: homeX, y: homeY });
       }
     }
+
+    // Prepare spatial bins for wanderers
+    binCols = Math.ceil(w / BIN_SIZE) + 1;
+    binRows = Math.ceil(h / BIN_SIZE) + 1;
+    bins = new Array(binCols * binRows);
+    for (let k = 0; k < bins.length; k++) {
+      bins[k] = [];
+    }
   }
 
   function animate() {
     const w = window.innerWidth;
     const h = getDocHeight();
     ctx.clearRect(0, 0, w, h);
-    const repelSq = REPEL_RADIUS * REPEL_RADIUS;
+
+    // Clear and re-populate spatial bins for wanderers
+    for (let k = 0; k < bins.length; k++) {
+      bins[k].length = 0;
+    }
+
+    // Update wandering points with smooth drifting and boundary bounce
+    const time = performance.now() * 0.001;
+    for (let j = 0; j < wanderers.length; j++) {
+      const wander = wanderers[j];
+      // Gentle sine-wave heading variation for natural fluid drift
+      wander.x += wander.vx + Math.sin(time * 0.8 + wander.noiseOff) * 0.35;
+      wander.y += wander.vy + Math.cos(time * 0.7 + wander.noiseOff) * 0.35;
+
+      // Soft bounce on page edges
+      const pad = 40;
+      if (wander.x < pad) { wander.x = pad; wander.vx = Math.abs(wander.vx); }
+      if (wander.x > w - pad) { wander.x = w - pad; wander.vx = -Math.abs(wander.vx); }
+      if (wander.y < pad) { wander.y = pad; wander.vy = Math.abs(wander.vy); }
+      if (wander.y > h - pad) { wander.y = h - pad; wander.vy = -Math.abs(wander.vy); }
+
+      // Assign wanderer into spatial bins it can reach
+      const minBx = Math.max(0, Math.floor((wander.x - wander.radius) / BIN_SIZE));
+      const maxBx = Math.min(binCols - 1, Math.floor((wander.x + wander.radius) / BIN_SIZE));
+      const minBy = Math.max(0, Math.floor((wander.y - wander.radius) / BIN_SIZE));
+      const maxBy = Math.min(binRows - 1, Math.floor((wander.y + wander.radius) / BIN_SIZE));
+
+      for (let by = minBy; by <= maxBy; by++) {
+        for (let bx = minBx; bx <= maxBx; bx++) {
+          bins[by * binCols + bx].push(wander);
+        }
+      }
+    }
+
     // Convert mouse position from viewport to page coordinates
     const mx = mouseX;
     const my = mouseY + window.scrollY;
+    const mouseActive = mx > -1000 && my > -1000;
 
     for (let i = 0, len = dots.length; i < len; i++) {
       const d = dots[i];
-      // Compute displacement from mouse
-      const dx = d.homeX - mx;
-      const dy = d.homeY - my;
-      const distSq = dx * dx + dy * dy;
+      let totalPushX = 0;
+      let totalPushY = 0;
+      let isRepelled = false;
 
-      if (distSq < repelSq && distSq > 0) {
-        const dist = Math.sqrt(distSq);
-        const force = (1 - dist / REPEL_RADIUS) * REPEL_STRENGTH;
-        const pushX = (dx / dist) * force;
-        const pushY = (dy / dist) * force;
-        d.x += (d.homeX + pushX - d.x) * 0.22;
-        d.y += (d.homeY + pushY - d.y) * 0.22;
+      // 1. Mouse repulsion
+      if (mouseActive) {
+        const dx = d.homeX - mx;
+        const dy = d.homeY - my;
+        const distSq = dx * dx + dy * dy;
+        const mouseRepelSq = REPEL_RADIUS * REPEL_RADIUS;
+
+        if (distSq < mouseRepelSq && distSq > 0) {
+          const dist = Math.sqrt(distSq);
+          const force = (1 - dist / REPEL_RADIUS) * REPEL_STRENGTH;
+          totalPushX += (dx / dist) * force;
+          totalPushY += (dy / dist) * force;
+          isRepelled = true;
+        }
+      }
+
+      // 2. Wandering points repulsion: look up ONLY wanderers in this dot's bin
+      const bx = Math.floor(d.homeX / BIN_SIZE);
+      const by = Math.floor(d.homeY / BIN_SIZE);
+      if (bx >= 0 && bx < binCols && by >= 0 && by < binRows) {
+        const localWanderers = bins[by * binCols + bx];
+        const numLocal = localWanderers.length;
+        for (let j = 0; j < numLocal; j++) {
+          const wander = localWanderers[j];
+          const wdx = d.homeX - wander.x;
+          const wdy = d.homeY - wander.y;
+          const r = wander.radius;
+
+          if (wdx > r || wdx < -r || wdy > r || wdy < -r) continue;
+
+          const wdistSq = wdx * wdx + wdy * wdy;
+          const wRepelSq = r * r;
+
+          if (wdistSq < wRepelSq && wdistSq > 0) {
+            const wdist = Math.sqrt(wdistSq);
+            const wforce = (1 - wdist / r) * wander.strength;
+            totalPushX += (wdx / wdist) * wforce;
+            totalPushY += (wdy / wdist) * wforce;
+            isRepelled = true;
+          }
+        }
+      }
+
+      if (isRepelled) {
+        d.x += (d.homeX + totalPushX - d.x) * 0.22;
+        d.y += (d.homeY + totalPushY - d.y) * 0.22;
       } else {
-        // Elastic return
+        // Elastic return to base grid position
         d.x += (d.homeX - d.x) * RETURN_SPEED;
         d.y += (d.homeY - d.y) * RETURN_SPEED;
       }
@@ -200,39 +310,18 @@ document.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('scroll', updateActiveNav, { passive: true });
   updateActiveNav();
 
-  // ── Combined Profile & Academic Section Collapse ────────────────
-  const combinedProfileCard = document.getElementById('combined-profile-card');
-  const profileCardToggle = document.getElementById('profile-card-toggle');
+  // ── Profile Section Paper Cover ─────────────────────────────────
+  const profilePaperCover = document.getElementById('profile-paper-cover');
   const aboutSection = document.getElementById('about');
+  const aboutContent = document.getElementById('about-profile-content');
 
-  // Lock the height of the section so the following gallery section stays in place when collapsed
-  function lockAboutHeight() {
-    if (aboutSection && combinedProfileCard && combinedProfileCard.classList.contains('open')) {
-      aboutSection.style.minHeight = '';
-      const naturalHeight = aboutSection.offsetHeight;
-      if (naturalHeight > 400) {
-        aboutSection.style.minHeight = `${naturalHeight}px`;
-      }
-    }
-  }
-
-  // Calculate after fonts & layout settle
-  window.addEventListener('load', lockAboutHeight);
-  setTimeout(lockAboutHeight, 500);
-  window.addEventListener('resize', lockAboutHeight);
-
-  if (combinedProfileCard && profileCardToggle) {
-    profileCardToggle.addEventListener('click', () => {
-      combinedProfileCard.classList.toggle('open');
-      const isExpanded = combinedProfileCard.classList.contains('open');
-      profileCardToggle.setAttribute('aria-expanded', isExpanded);
-    });
-
-    profileCardToggle.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        profileCardToggle.click();
-      }
+  if (profilePaperCover && aboutSection && aboutContent) {
+    profilePaperCover.addEventListener('click', () => {
+      aboutSection.classList.add('open');
+      profilePaperCover.setAttribute('aria-expanded', 'true');
+      profilePaperCover.disabled = true;
+      aboutContent.removeAttribute('aria-hidden');
+      aboutContent.inert = false;
     });
   }
 
@@ -376,7 +465,10 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
 // Get the 4-digit current year and insert it into the HTML
-document.getElementById("currentYear").innerText = new Date().getFullYear();
+const currentYearEl = document.getElementById("currentYear");
+if (currentYearEl) {
+  currentYearEl.innerText = new Date().getFullYear();
+}
 
   // 5. Lightbox Modal
   const lightbox = document.getElementById('lightbox');
@@ -465,8 +557,8 @@ document.getElementById("currentYear").innerText = new Date().getFullYear();
   const handles = document.querySelectorAll('.handle');
 
   if (resizeBox && portfolioBox && handles.length > 0) {
-    const IDLE_RESET_MS = 1000; // Return to original after 3 seconds of not being touched
-    const AUTO_CYCLE_MS = 4000; // Makes itself larger every so often (~7.5s)
+    const IDLE_RESET_MS = 3000; // Return to original after 3 seconds of not being touched
+    const AUTO_CYCLE_MS = 7500; // Makes itself larger every so often (~7.5s)
     let resetTimer = null;
     let autoCycleTimer = null;
     let isHovered = false;
@@ -511,14 +603,15 @@ document.getElementById("currentYear").innerText = new Date().getFullYear();
     }
 
     // Automatically make itself larger every so often
-    function makeLarger(targetPadX = 100, targetPadY = 48) {
+    function makeLarger(targetPadX = 60, targetPadY = 24) {
       if (isResizing) return;
       resizeBox.classList.add('show-dims');
       resizeBox.classList.add('is-expanded');
       resizeBox.style.transition = 'top 0.9s cubic-bezier(0.34, 1.56, 0.64, 1), bottom 0.9s cubic-bezier(0.34, 1.56, 0.64, 1), left 0.9s cubic-bezier(0.34, 1.56, 0.64, 1), right 0.9s cubic-bezier(0.34, 1.56, 0.64, 1)';
       resizeBox.style.setProperty('--box-top', `${targetPadY}px`);
+      resizeBox.style.setProperty('--box-bottom', `${targetPadY}px`);
+      resizeBox.style.setProperty('--box-left', `${targetPadX}px`);
       resizeBox.style.setProperty('--box-right', `${targetPadX}px`);
-      
 
       const startTime = performance.now();
       const animDuration = 900;
@@ -681,4 +774,3 @@ document.getElementById("currentYear").innerText = new Date().getFullYear();
     });
   }
 });
-

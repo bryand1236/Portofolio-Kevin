@@ -904,16 +904,21 @@ body.tool-code { cursor: cell; }
    Profile & Academic Section
    ========================================================================== */
 .profile-academic-grid {
+  position: relative;
+  isolation: isolate;
+  margin-bottom: 50px;
+}
+
+.about-section-content {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 36px;
   align-items: start;
-  margin-bottom: 50px;
-  min-height: 720px; /* Keeps the following sections stationary when profile collapses */
+  min-height: 720px;
 }
 
 @media (max-width: 820px) {
-  .profile-academic-grid {
+  .about-section-content {
     grid-template-columns: 1fr;
   }
 }
@@ -947,14 +952,14 @@ body.tool-code { cursor: cell; }
 }
 
 @keyframes starFloat {
-  0% { transform: rotate(8deg) translateY(0); }
-  100% { transform: rotate(12deg) translateY(-4px); }
+  0%, 50% { transform: rotate(12deg) translateY(-1rem) translateX(2rem); }
+  100% { transform: rotate(360deg) translateY(1rem) translateX(0rem); }
 }
 
 /* Photo Portrait Card */
 .photo-portrait-card {
   width: 100%;
-  height: 440px;
+  height: 30rem;
   border-radius: 36px;
   overflow: hidden;
   position: relative;
@@ -1121,16 +1126,17 @@ body.tool-code { cursor: cell; }
 }
 
 /* ==========================================================================
-   Combined Profile & Academic Section (Clean Boxy Card Style)
+   Combined Profile & Academic Section
    ========================================================================== */
 .combined-profile-card {
   background: #ffffff;
   border: 2px solid var(--border-dark);
-  border-radius: 8px; /* Boxy aesthetic */
-  box-shadow: 4px 4px 0px #121316;
-  overflow: hidden;
-  position: relative;
-  transition: box-shadow 0.25s ease;
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 #121316;
+}
+
+.profile-card-content {
+  border-radius: inherit;
 }
 
 /* Card Header Toggle Bar */
@@ -1141,13 +1147,7 @@ body.tool-code { cursor: cell; }
   padding: 16px 20px;
   background: #ffffff;
   border-bottom: 2px solid var(--border-dark);
-  cursor: pointer;
   user-select: none;
-  transition: background-color 0.15s ease;
-}
-
-.card-toggle-bar:hover {
-  background: #f8fafc;
 }
 
 .card-toggle-title {
@@ -1196,54 +1196,135 @@ body.tool-code { cursor: cell; }
   border-radius: 50%;
 }
 
-.card-chevron-btn {
-  background: #ffffff;
-  border: 1.5px solid var(--border-dark);
-  border-radius: 4px; /* Boxy */
-  width: 32px;
-  height: 32px;
+.profile-paper-cover {
+  position: absolute;
+  inset: -45px;
+  left: calc(50% - 50vw);
+  right: auto;
+  z-index: 20;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
+  gap: 14px;
+  width: 100vw;
+  height: calc(100% + 60px);
+  padding: 28px;
+  border: 0;
   color: var(--text-primary);
-  font-size: 14px;
-  box-shadow: 2px 2px 0px #121316;
-  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease;
-  flex-shrink: 0;
+  text-align: center;
+  background:
+    radial-gradient(ellipse at 18% 22%, rgba(255, 255, 255, 0.74), transparent 42%),
+    repeating-linear-gradient(4deg, rgba(174, 143, 88, 0.045) 0 1px, transparent 1px 6px),
+    #f7edcf;
+  clip-path: polygon(
+    0 0.8%, 6% 0, 13% 0.7%, 20% 0.1%, 27% 0.8%, 34% 0, 41% 0.8%, 48% 0,
+    55% 0.8%, 62% 0, 69% 0.8%, 76% 0, 83% 0.8%, 90% 0, 96% 0.8%, 100% 0.1%,
+    103% 9%, 105% 17%, 103% 25%, 105% 33%, 103% 41%, 105% 49%, 103% 57%,
+    105% 65%, 103% 73%, 105% 81%, 103% 89%, 105% 99%, 93% 99.5%, 86% 99%,
+    79% 100%, 72% 99.2%, 65% 100%, 58% 99%, 51% 100%, 44% 99.2%, 37% 100%,
+    30% 99%, 23% 100%, 16% 99.2%, 9% 100%, 3% 99%, -3% 99.5%, -2.2% 91%, -3% 83%,
+    -2.2% 75%, -3% 67%, -2.2% 59%, -3% 51%, -2.2% 43%, -3% 35%, -2.2% 27%, -3% 19%, -2.2% 11%
+  );
+  filter: drop-shadow(0 16px 12px rgba(18, 19, 22, 0.28));
+  font: inherit;
+  cursor: pointer;
+  transform: rotate(-0.7deg) scale(1.005);
+  transform-origin: 78% 16%;
+  transition:
+    transform 750ms cubic-bezier(0.2, 0.75, 0.25, 1),
+    opacity 450ms ease,
+    filter 250ms ease,
+    visibility 0s linear 750ms;
 }
 
-.card-chevron-btn:hover {
-  background: var(--accent-blue-light);
+.profile-paper-cover::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 76px;
+  height: 76px;
+  background: linear-gradient(225deg, #d4c49e 0 48%, #fff9e8 51%);
+  clip-path: polygon(0 0, 100% 0, 100% 100%);
+  filter: drop-shadow(-3px 4px 3px rgba(18, 19, 22, 0.2));
+  transition: transform 250ms ease;
 }
 
-.combined-profile-card.open .card-chevron-btn i {
-  transform: rotate(180deg);
+.profile-paper-cover:hover {
+  filter: drop-shadow(0 20px 14px rgba(18, 19, 22, 0.3));
+  transform: rotate(-1.5deg) translateY(-4px) scale(1.015);
 }
 
-.card-chevron-btn i {
-  display: inline-block;
-  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+.profile-paper-cover:hover::after {
+  transform: rotate(-12deg) translate(-4px, 4px);
+}
+
+.profile-paper-cover:active {
+  cursor: pointer;
+}
+
+.profile-paper-cover:focus-visible {
+  outline: 3px solid var(--accent-blue);
+  outline-offset: -10px;
+}
+
+.profile-academic-grid.open .profile-paper-cover {
+  opacity: 0;
+  pointer-events: none;
+  transform: perspective(900px) rotateY(-100deg) rotateZ(-8deg) translate(-28%, -12%) scale(0.82);
+  visibility: hidden;
+}
+
+.paper-cover-label {
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: var(--accent-blue);
+}
+
+.paper-cover-prompt {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px;
+  border: 1.5px dashed rgba(18, 19, 22, 0.4);
+  background: rgba(255, 255, 255, 0.3);
+  font-family: var(--font-mono);
+  font-size: clamp(1.2rem, 3vw, 1.8rem);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.paper-cover-prompt i {
+  color: var(--accent-blue);
+}
+
+.paper-cover-hint {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
 }
 
 /* Collapsible Body */
 .card-collapsible-body {
-  max-height: 0;
-  opacity: 0;
-  overflow: hidden;
-  transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, padding 0.3s ease;
-  padding: 0 20px;
+  padding: 20px 24px;
 }
 
-.combined-profile-card.open .card-collapsible-body {
-  max-height: 1200px;
-  opacity: 1;
-  padding: 20px;
+@media (prefers-reduced-motion: reduce) {
+  .profile-paper-cover,
+  .profile-paper-cover::after {
+    transition-duration: 0.01ms;
+    transition-delay: 0s;
+  }
 }
 
 /* Section Blocks Inside the Card */
 .card-section-block {
   margin-bottom: 0;
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-bottom:20px
 }
 
 .card-inner-divider {

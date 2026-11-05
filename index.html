@@ -33,7 +33,7 @@
       <i class="bi bi-chevron-left" id="side-nav-arrow"></i>
     </button>
     <div class="side-nav-header">
-      <span class="side-nav-logo">KH.</span>
+      <span class="side-nav-logo">KEVIN. H.</span>
       
     </div>
     <div class="side-nav-links">
@@ -171,8 +171,17 @@
 
     <!-- Profile & Education Section -->
     <section class="profile-academic-grid" id="about">
-      <!-- Left Column: Photo Frame with Floating Media Player -->
-      <div class="profile-col">
+      <button class="profile-paper-cover" id="profile-paper-cover" type="button" aria-expanded="false"
+        aria-controls="about-profile-content"
+        aria-label="Peel away the paper to reveal Kevin's portrait, profile, education, languages, and tools">
+        <span class="paper-cover-label">• PROFILE ARCHIVE •</span>
+        <span class="paper-cover-prompt"><i class="bi bi-hand-index-thumb"></i> PEEL TO REVEAL</span>
+        <span class="paper-cover-hint">A closer look at Kevin's creative world</span>
+      </button>
+
+      <div class="about-section-content" id="about-profile-content" aria-hidden="true" inert>
+        <!-- Left Column: Photo Frame with Floating Media Player -->
+        <div class="profile-col">
         <div class="photo-showcase-wrapper">
           <!-- Top Right Denim Star Patch Sticker -->
           <img src="assets/images/patch-star-denim.png" alt="Star Patch" class="photo-star-patch">
@@ -205,26 +214,24 @@
           <!-- Bottom Right Cute Puppy Sticker (matches reference image) -->
           <img src="assets/images/sticker-coffee.png" alt="Puppy Sticker" class="photo-dog-sticker">
         </div>
-      </div>
+        </div>
 
-      <!-- Right Column: Combined Profile & Academic Section (Collapsible, Clean Boxy Style) -->
-      <div class="academic-col">
-        <div class="combined-profile-card open" id="combined-profile-card">
-          <!-- Main Accordion/Card Header -->
-          <div class="card-toggle-bar" id="profile-card-toggle" role="button" tabindex="0" aria-expanded="true">
-            <div class="card-toggle-title">
-              <span class="tag-accent">• PROFILE ARCHIVE •</span>
-              <h2 class="card-main-heading">
-                <span id="typewriter-text"></span><span class="typewriter-cursor">|</span><span class="cyan-dot"></span>
-              </h2>
+        <!-- Right Column: Combined Profile & Academic Section -->
+        <div class="academic-col">
+          <div class="combined-profile-card">
+            <div class="profile-card-content">
+            <!-- Main Card Header -->
+            <div class="card-toggle-bar">
+              <div class="card-toggle-title">
+                <span class="tag-accent">• PROFILE ARCHIVE •</span>
+                <h2 class="card-main-heading">
+                  <span id="typewriter-text"></span><span class="typewriter-cursor">|</span><span class="cyan-dot"></span>
+                </h2>
+              </div>
             </div>
-            <button class="card-chevron-btn" aria-label="Toggle details">
-              <i class="bi bi-chevron-down" id="profile-card-chevron"></i>
-            </button>
-          </div>
 
-          <!-- Collapsible Body Content -->
-          <div class="card-collapsible-body" id="profile-card-body">
+            <!-- Profile and education details beneath the paper -->
+            <div class="card-collapsible-body" id="profile-card-body">
             <!-- 1. Bio Overview -->
             <div class="card-section-block">
               <p class="bio-paragraph">
@@ -259,6 +266,7 @@
                   <div class="timeline-date">02 / 2022 — 2025</div>
                   <div class="timeline-title">SMP Fajar Sentosa</div>
                   <div class="timeline-desc">Junior High School</div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -310,7 +318,7 @@
 
                 <div class="software-card">
                   <div class="software-icon-frame">
-                    <img src="assets/images/softwares/canva.png" alt="Canva Pro">
+                    <img src="assets/images/softwares/illustrator.png" alt="Canva Pro">
                   </div>
                   <div class="software-meta">
                     <span class="software-name">Canva Pro</span>
@@ -319,7 +327,7 @@
 
                 <div class="software-card">
                   <div class="software-icon-frame">
-                    <img src="assets/images/softwares/premiere.png" alt="Adobe Premiere Pro">
+                    <img src="assets/images/softwares/canva.png" alt="Adobe Premiere Pro">
                   </div>
                   <div class="software-meta">
                     <span class="software-name">Adobe Premiere Pro</span>
@@ -341,6 +349,7 @@
                   </div>
                   <div class="software-meta">
                     <span class="software-name">Adobe Lightroom</span>
+                  </div>
                   </div>
                 </div>
               </div>
