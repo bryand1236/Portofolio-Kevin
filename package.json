@@ -1,0 +1,23 @@
+{
+  "name": "portofolio-kevin",
+  "version": "1.0.0",
+  "description": "Kevin H. Design Archive Portfolio 2026",
+  "main": "script.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bryand1236/Portofolio-Kevin.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/bryand1236/Portofolio-Kevin/issues"
+  },
+  "homepage": "https://github.com/bryand1236/Portofolio-Kevin#readme",
+  "dependencies": {
+    "@vercel/analytics": "^2.0.1"
+  }
+}
