@@ -1045,13 +1045,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (detailsToolsList) {
       detailsToolsList.innerHTML = '';
-      currentItem.tools.forEach((t, idx) => {
-        const pill = document.createElement('span');
-        pill.className = 'details-tool-pill';
-        pill.style.animationDelay = `${0.04 + idx * 0.04}s`;
-        pill.textContent = t;
-        detailsToolsList.appendChild(pill);
-      });
+      if (Array.isArray(currentItem.tools) && currentItem.tools.length > 0) {
+        currentItem.tools.forEach((t, idx) => {
+          const pill = document.createElement('span');
+          pill.className = 'details-tool-pill';
+          pill.style.animationDelay = `${0.04 + idx * 0.04}s`;
+          pill.textContent = t;
+          detailsToolsList.appendChild(pill);
+        });
+      }
     }
 
     if (detailsZoomBtn) {
