@@ -511,7 +511,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── Typewriter Effect for "Hello, Kevin Hermando Rama." (Looping) ──
   const typewriterTarget = document.getElementById('typewriter-text');
   if (typewriterTarget) {
-    const fullText = "Hello, Kevin Hermando Rama.";
+    const fullText = "Hello, Kevin Hernando Rama.";
     let charIndex = 0;
     let isDeleting = false;
     const typeSpeed = 80;
@@ -706,7 +706,7 @@ document.addEventListener('DOMContentLoaded', () => {
       title: 'Ramadan Poster',
       subtitle: 'Poster',
       desc: 'Poster',
-      tools: ['Photoshop', 'Illustrator'],
+       
       img: 'assets/images/works/feed-ramadan.jpg'
     },
     {
@@ -716,7 +716,7 @@ document.addEventListener('DOMContentLoaded', () => {
       title: 'Smartwatch Poster',
       subtitle: 'Poster',
       desc: 'Poster',
-      tools: ['Photoshop', 'Canva'],
+       
       img: 'assets/images/works/feed-smartwatch.jpg'
     },
     {
@@ -726,7 +726,7 @@ document.addEventListener('DOMContentLoaded', () => {
       title: 'EU Care ',
       subtitle: 'Poster',
       desc: 'Poster',
-      tools: ['Photoshop'],
+       
       img: 'assets/images/works/feed-history.jpg'
     },
     {
@@ -736,7 +736,7 @@ document.addEventListener('DOMContentLoaded', () => {
       title: 'Serum Bottle Poster',
       subtitle: 'Poster',
       desc: 'Poster',
-      tools: ['Illustrator', 'Photoshop'],
+       
       img: 'assets/images/works/feed-eu-glycerin.jpg'
     },
     {
@@ -746,7 +746,7 @@ document.addEventListener('DOMContentLoaded', () => {
       title: 'Hydration Wave Poster',
       subtitle: 'Poster',
       desc: 'Poster',
-      tools: ['Photoshop'],
+       
       img: 'assets/images/works/feed-eu-ripple.jpg'
     },
     {
@@ -756,7 +756,7 @@ document.addEventListener('DOMContentLoaded', () => {
       title: 'Skincare Formula Poster',
       subtitle: 'Poster',
       desc: 'Poster',
-      tools: ['Illustrator', 'Canva'],
+       
       img: 'assets/images/works/feed-eu-alcohol.jpg'
     },
     {
@@ -766,7 +766,7 @@ document.addEventListener('DOMContentLoaded', () => {
       title: 'Monochrome Mood Poster',
       subtitle: 'Poster',
       desc: 'Poster',
-      tools: ['Photoshop', 'Lightroom'],
+       
       img: 'assets/images/works/feed-drop.jpg'
     },
     {
@@ -776,7 +776,7 @@ document.addEventListener('DOMContentLoaded', () => {
       title: 'Teh Pucuk Beverage Poster',
       subtitle: 'Poster',
       desc: 'Poster',
-      tools: ['Photoshop'],
+       
       img: 'assets/images/works/feed-teh-pucuk.png'
     },
     {
@@ -786,7 +786,7 @@ document.addEventListener('DOMContentLoaded', () => {
       title: 'Cosmetics Campaign Poster',
       subtitle: 'Poster',
       desc: 'Poster',
-      tools: ['Photoshop', 'Canva'],
+       
       img: 'assets/images/works/feed-eu-hello.jpg'
     },
     {
@@ -796,7 +796,7 @@ document.addEventListener('DOMContentLoaded', () => {
       title: 'AirPods Audio Poster',
       subtitle: 'Poster',
       desc: 'Poster',
-      tools: ['Photoshop', 'Illustrator'],
+       
       img: 'assets/images/works/feed-airpods.jpg'
     },
     {
@@ -806,7 +806,7 @@ document.addEventListener('DOMContentLoaded', () => {
       title: 'Fashion Editorial Poster',
       subtitle: 'Poster',
       desc: 'Poster',
-      tools: ['Photoshop', 'InDesign'],
+       
       img: 'assets/images/works/feed-closmain.jpg'
     },
     {
@@ -816,7 +816,7 @@ document.addEventListener('DOMContentLoaded', () => {
       title: 'Hand Sanitizer Story',
       subtitle: 'Instagram Story',
       desc: 'Instagram Story',
-      tools: ['Photoshop', 'Canva'],
+       
       img: 'assets/images/works/story-eu-bottle.jpg',
       isContain: true
     },
@@ -827,7 +827,7 @@ document.addEventListener('DOMContentLoaded', () => {
       title: 'Sold Out Announcement Story',
       subtitle: 'Instagram Story',
       desc: 'Instagram Story',
-      tools: ['Photoshop', 'Illustrator'],
+       
       img: 'assets/images/works/story-eu-soldout.jpg',
       isContain: true
     },
@@ -838,7 +838,7 @@ document.addEventListener('DOMContentLoaded', () => {
       title: 'ID Card Badge',
       subtitle: 'ID Card',
       desc: 'ID Card',
-      tools: ['Illustrator', 'Photoshop'],
+       
       img: 'assets/images/works/idcard-msp.jpg',
       isContain: true
     },
@@ -849,7 +849,7 @@ document.addEventListener('DOMContentLoaded', () => {
       title: 'Lanyard Strap',
       subtitle: 'Lanyard',
       desc: 'Lanyard',
-      tools: ['Illustrator', 'InDesign'],
+       
       img: 'assets/images/works/lanyard-msp.png',
       isContain: false
     },
@@ -860,7 +860,7 @@ document.addEventListener('DOMContentLoaded', () => {
       title: 'Bus Stop Advertisement Mockup',
       subtitle: 'Mockup',
       desc: 'Mockup',
-      tools: ['Photoshop Mockup Engine'],
+       
       img: 'assets/images/works/mockup-bus-stop.jpg'
     },
     {
@@ -870,18 +870,29 @@ document.addEventListener('DOMContentLoaded', () => {
       title: 'Malaysia Climate Infographic',
       subtitle: 'Infografis',
       desc: 'Infografis',
-      tools: ['Illustrator', 'Canva'],
+       
       img: 'assets/images/works/infographic-iklim-malaysia.jpg',
       isContain: true
     },
     {
       id: 18,
       cat: 'brochure',
+      catLabel: 'Infografis',
+      title: 'MSP Recruitment Infographic',
+      subtitle: 'Infografis',
+      desc: 'Infografis',
+       
+      img: 'assets/images/works/infographic-msp.jpg',
+      isContain: true
+    },
+    {
+      id: 19,
+      cat: 'brochure',
       catLabel: 'Brosur',
       title: 'Tri-Fold Brochure',
       subtitle: 'Brosur',
       desc: 'Brosur',
-      tools: ['InDesign', 'Photoshop'],
+       
       img: 'assets/images/works/brochure-metschool-trifold.jpg',
       isContain: true
     }
