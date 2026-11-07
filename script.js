@@ -45,6 +45,8 @@
     }
   }
 
+  let cachedDocHeight = 0;
+
   function getDocHeight() {
     return Math.max(
       document.body.scrollHeight,
@@ -57,7 +59,8 @@
   function resize() {
     const dpr = window.devicePixelRatio || 1;
     const w = window.innerWidth;
-    const h = getDocHeight();
+    cachedDocHeight = getDocHeight();
+    const h = cachedDocHeight;
     canvas.width = w * dpr;
     canvas.height = h * dpr;
     canvas.style.height = h + 'px';
@@ -93,7 +96,11 @@
 
   function animate() {
     const w = window.innerWidth;
-    const h = getDocHeight();
+    const h = cachedDocHeight || window.innerHeight;
+    const scrollY = window.scrollY;
+    const viewTop = scrollY - 120;
+    const viewBottom = scrollY + window.innerHeight + 120;
+
     ctx.clearRect(0, 0, w, h);
 
     // Clear and re-populate spatial bins for wanderers
@@ -131,11 +138,22 @@
 
     // Convert mouse position from viewport to page coordinates
     const mx = mouseX;
-    const my = mouseY + window.scrollY;
+    const my = mouseY + scrollY;
     const mouseActive = mx > -1000 && my > -1000;
+
+    // Batched rendering: set styles once and build a single path
+    ctx.fillStyle = DOT_COLOR;
+    ctx.globalAlpha = DOT_ALPHA;
+    ctx.beginPath();
 
     for (let i = 0, len = dots.length; i < len; i++) {
       const d = dots[i];
+
+      // Viewport culling: only process and draw visible dots!
+      if (d.homeY < viewTop || d.homeY > viewBottom) {
+        continue;
+      }
+
       let totalPushX = 0;
       let totalPushY = 0;
       let isRepelled = false;
@@ -192,12 +210,11 @@
         d.y += (d.homeY - d.y) * RETURN_SPEED;
       }
 
-      ctx.beginPath();
+      ctx.moveTo(d.x + DOT_RADIUS, d.y);
       ctx.arc(d.x, d.y, DOT_RADIUS, 0, Math.PI * 2);
-      ctx.fillStyle = DOT_COLOR;
-      ctx.globalAlpha = DOT_ALPHA;
-      ctx.fill();
     }
+
+    ctx.fill();
     ctx.globalAlpha = 1;
     requestAnimationFrame(animate);
   }
@@ -226,6 +243,57 @@
 })();
 
 document.addEventListener('DOMContentLoaded', () => {
+
+  // ── Cinematic Opening Text Reveal Controller ─────────────────────
+  (function initCinematicOpening() {
+    const openingScreen = document.getElementById('opening-screen');
+    if (!openingScreen) return;
+
+    window.scrollTo(0, 0);
+
+    const openingTitleWrap = document.getElementById('opening-title-wrap');
+    let openingDismissed = false;
+
+    function dismissOpening() {
+      if (openingDismissed) return;
+      openingDismissed = true;
+
+      // Soft cinematic exit glide
+      if (openingTitleWrap) {
+        openingTitleWrap.classList.add('fade-out');
+      }
+
+      // Smooth backdrop dissolve
+      setTimeout(() => {
+        openingScreen.classList.add('is-hidden');
+      }, 250);
+
+      // Cleanup & restore full page interactivity
+      setTimeout(() => {
+        openingScreen.style.display = 'none';
+        document.body.classList.remove('is-loading');
+        window.dispatchEvent(new Event('resize'));
+      }, 850);
+    }
+
+    // Auto-advance after cinematic intro hold (~1.4 seconds)
+    const autoDismissTimer = setTimeout(dismissOpening, 1400);
+
+    // Fast-skip on any user click or key press (Space / Enter / Escape)
+    function handleSkip() {
+      if (!openingDismissed) {
+        clearTimeout(autoDismissTimer);
+        dismissOpening();
+      }
+    }
+
+    openingScreen.addEventListener('click', handleSkip);
+    window.addEventListener('keydown', (e) => {
+      if (e.key === ' ' || e.key === 'Enter' || e.key === 'Escape') {
+        handleSkip();
+      }
+    });
+  })();
 
   // ── Side Drawer Navbar ─────────────────────────────────────────
   const sideNavbar = document.getElementById('side-navbar');
@@ -280,10 +348,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Close on nav link click
+  // Smooth scroll & close on nav link click
   sideNavLinks.forEach(link => {
     link.addEventListener('click', (e) => {
-      e.stopPropagation();
+      const targetId = link.getAttribute('href');
+      if (targetId && targetId.startsWith('#')) {
+        const targetEl = document.querySelector(targetId);
+        if (targetEl) {
+          e.preventDefault();
+          e.stopPropagation();
+          closeNav();
+          targetEl.scrollIntoView({ behavior: 'smooth' });
+          return;
+        }
+      }
       closeNav();
     });
   });
@@ -310,18 +388,123 @@ document.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('scroll', updateActiveNav, { passive: true });
   updateActiveNav();
 
-  // ── Profile Section Paper Cover ─────────────────────────────────
+  // ── Audio / Floating Media Player (Whitney Houston - Greatest Love of All) ──
+  const audioEl = document.getElementById('whitney-audio');
+  const mediaPlayerWidget = document.getElementById('media-player-widget');
+  const btnPlayPause = document.getElementById('btn-play-pause');
+  const btnRepeat = document.getElementById('btn-player-repeat');
+  const btnPrev = document.getElementById('btn-player-prev');
+  const btnNext = document.getElementById('btn-player-next');
+  const btnShuffle = document.getElementById('btn-player-shuffle');
+  const progressBar = document.getElementById('mini-progress-bar');
+  const progressFill = document.getElementById('mini-progress-fill');
+
+  function updatePlayerUI(isPlaying) {
+    if (!btnPlayPause) return;
+    if (isPlaying) {
+      btnPlayPause.innerHTML = '<i class="bi bi-pause-fill"></i>';
+      if (mediaPlayerWidget) mediaPlayerWidget.classList.add('is-playing');
+    } else {
+      btnPlayPause.innerHTML = '<i class="bi bi-play-fill"></i>';
+      if (mediaPlayerWidget) mediaPlayerWidget.classList.remove('is-playing');
+    }
+  }
+
+  function startAudioPlayback() {
+    if (!audioEl) return;
+    audioEl.volume = 0.3; // Comfortably turned down to 30%
+    if (audioEl.paused) {
+      audioEl.play().then(() => {
+        updatePlayerUI(true);
+      }).catch((err) => {
+        console.warn('Audio playback prevented:', err);
+      });
+    }
+  }
+
+  // ── Notebook Paper Cover: Interactive Drag-to-Tear Down the Middle ──
   const profilePaperCover = document.getElementById('profile-paper-cover');
   const aboutSection = document.getElementById('about');
   const aboutContent = document.getElementById('about-profile-content');
+  const leftHalf = profilePaperCover ? profilePaperCover.querySelector('.nb-paper-left') : null;
+  const rightHalf = profilePaperCover ? profilePaperCover.querySelector('.nb-paper-right') : null;
+  const tearSpine = document.getElementById('nb-tear-spine');
 
   if (profilePaperCover && aboutSection && aboutContent) {
-    profilePaperCover.addEventListener('click', () => {
+    let hasTriggered = false;
+
+    function playInwardTearAnimation() {
+      if (hasTriggered || aboutSection.classList.contains('open')) return;
+      hasTriggered = true;
+
+      // Automatically play the song when the paper is torn open
+      startAudioPlayback();
+
+      // Clear any manual transforms so smooth CSS 3D transitions take full control
+      if (leftHalf) {
+        leftHalf.style.transform = '';
+        leftHalf.style.opacity = '';
+        leftHalf.style.transition = '';
+      }
+      if (rightHalf) {
+        rightHalf.style.transform = '';
+        rightHalf.style.opacity = '';
+        rightHalf.style.transition = '';
+      }
+      if (tearSpine) {
+        tearSpine.style.opacity = '0';
+        tearSpine.style.transition = 'opacity 0.3s ease';
+      }
+
+      // Add 'open' class to trigger the smooth, slow inward 3D tear
       aboutSection.classList.add('open');
       profilePaperCover.setAttribute('aria-expanded', 'true');
-      profilePaperCover.disabled = true;
       aboutContent.removeAttribute('aria-hidden');
       aboutContent.inert = false;
+    }
+
+    // 1. Click interaction: triggers the slow inward tearing animation
+    profilePaperCover.addEventListener('click', () => {
+      playInwardTearAnimation();
+    });
+
+    // 2. Drag interaction: as soon as dragged, it plays the animation
+    let pointerStartX = 0;
+    let pointerStartY = 0;
+    let isPointerActive = false;
+
+    profilePaperCover.addEventListener('pointerdown', (e) => {
+      if (hasTriggered || aboutSection.classList.contains('open')) return;
+      isPointerActive = true;
+      pointerStartX = e.clientX;
+      pointerStartY = e.clientY;
+    });
+
+    window.addEventListener('pointermove', (e) => {
+      if (!isPointerActive || hasTriggered) return;
+      const dx = e.clientX - pointerStartX;
+      const dy = e.clientY - pointerStartY;
+      // When dragged even slightly (>4px), immediately play the animation
+      if (Math.hypot(dx, dy) > 4) {
+        isPointerActive = false;
+        playInwardTearAnimation();
+      }
+    });
+
+    window.addEventListener('pointerup', () => {
+      isPointerActive = false;
+    });
+
+    window.addEventListener('pointercancel', () => {
+      isPointerActive = false;
+    });
+
+    // 3. Keyboard accessibility (Enter or Space)
+    profilePaperCover.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        playInwardTearAnimation();
+      }
     });
   }
 
@@ -428,103 +611,701 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 3. Audio / Play Pause Simulation Toggle
-  const btnPlayPause = document.getElementById('btn-play-pause');
-  let isPlaying = false;
-
-  if (btnPlayPause) {
-    btnPlayPause.addEventListener('click', () => {
-      isPlaying = !isPlaying;
-      if (isPlaying) {
-        btnPlayPause.innerHTML = '<i class="bi bi-pause-fill"></i>';
-      } else {
-        btnPlayPause.innerHTML = '<i class="bi bi-play-fill"></i>';
-      }
-    });
-  }
-
-  // 4. Portfolio Filter Tabs
-  const filterBtns = document.querySelectorAll('.filter-btn');
-  const cards = document.querySelectorAll('.artwork-card');
-
-  filterBtns.forEach((btn) => {
-    btn.addEventListener('click', () => {
-      filterBtns.forEach((b) => b.classList.remove('active'));
-      btn.classList.add('active');
-      const filter = btn.dataset.filter;
-
-      cards.forEach((card) => {
-        if (filter === 'all' || card.dataset.cat === filter) {
-          card.style.display = 'flex';
-          card.style.animation = 'fadeIn 0.3s ease forwards';
+  // 3. Audio / Floating Media Player Controls
+  if (audioEl) {
+    if (btnPlayPause) {
+      btnPlayPause.addEventListener('click', () => {
+        if (audioEl.paused) {
+          startAudioPlayback();
         } else {
-          card.style.display = 'none';
+          audioEl.pause();
+          updatePlayerUI(false);
         }
       });
+    }
+
+    audioEl.addEventListener('play', () => updatePlayerUI(true));
+    audioEl.addEventListener('pause', () => updatePlayerUI(false));
+
+    // Progress Bar Updates
+    audioEl.addEventListener('timeupdate', () => {
+      if (progressFill && audioEl.duration) {
+        const pct = (audioEl.currentTime / audioEl.duration) * 100;
+        progressFill.style.width = `${pct}%`;
+      }
     });
-  });
 
-// Get the 4-digit current year and insert it into the HTML
-const currentYearEl = document.getElementById("currentYear");
-if (currentYearEl) {
-  currentYearEl.innerText = new Date().getFullYear();
-}
+    // Song ended
+    audioEl.addEventListener('ended', () => {
+      if (!audioEl.loop) {
+        updatePlayerUI(false);
+        if (progressFill) progressFill.style.width = '0%';
+      }
+    });
 
-  // 5. Lightbox Modal
+    // Click / Drag to seek
+    if (progressBar) {
+      progressBar.addEventListener('click', (e) => {
+        if (!audioEl.duration) return;
+        const rect = progressBar.getBoundingClientRect();
+        const clickRatio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+        audioEl.currentTime = clickRatio * audioEl.duration;
+        if (progressFill) progressFill.style.width = `${clickRatio * 100}%`;
+      });
+    }
+
+    // Repeat / Loop Toggle
+    if (btnRepeat) {
+      btnRepeat.addEventListener('click', () => {
+        audioEl.loop = !audioEl.loop;
+        btnRepeat.classList.toggle('active', audioEl.loop);
+      });
+    }
+
+    // Rewind / Previous: restart or rewind 10s
+    if (btnPrev) {
+      btnPrev.addEventListener('click', () => {
+        if (audioEl.currentTime > 3) {
+          audioEl.currentTime = 0;
+        } else {
+          audioEl.currentTime = Math.max(0, audioEl.currentTime - 10);
+        }
+      });
+    }
+
+    // Forward / Next: jump forward 10s
+    if (btnNext) {
+      btnNext.addEventListener('click', () => {
+        if (audioEl.duration) {
+          audioEl.currentTime = Math.min(audioEl.duration, audioEl.currentTime + 10);
+        }
+      });
+    }
+
+    // Shuffle / Chorus Jump: jumps straight to the chorus (1:31 / 91s)
+    if (btnShuffle) {
+      btnShuffle.addEventListener('click', () => {
+        if (audioEl.duration) {
+          audioEl.currentTime = 91.0;
+          if (audioEl.paused) {
+            startAudioPlayback();
+          }
+          btnShuffle.classList.add('active');
+          setTimeout(() => btnShuffle.classList.remove('active'), 1200);
+        }
+      });
+    }
+  }
+
+  // ── 4. Works 3D Cylindrical Carousel ─────────────────────────────────
+  const WORKS_DATA = [
+    {
+      id: 1,
+      cat: 'feed',
+      catLabel: 'Poster',
+      title: 'Ramadan Poster',
+      subtitle: 'Poster',
+      desc: 'Poster',
+      tools: ['Photoshop', 'Illustrator'],
+      img: 'assets/images/works/feed-ramadan.jpg'
+    },
+    {
+      id: 2,
+      cat: 'feed',
+      catLabel: 'Poster',
+      title: 'Smartwatch Poster',
+      subtitle: 'Poster',
+      desc: 'Poster',
+      tools: ['Photoshop', 'Canva'],
+      img: 'assets/images/works/feed-smartwatch.jpg'
+    },
+    {
+      id: 3,
+      cat: 'feed',
+      catLabel: 'Poster',
+      title: 'EU Care ',
+      subtitle: 'Poster',
+      desc: 'Poster',
+      tools: ['Photoshop'],
+      img: 'assets/images/works/feed-history.jpg'
+    },
+    {
+      id: 4,
+      cat: 'feed',
+      catLabel: 'Poster',
+      title: 'Serum Bottle Poster',
+      subtitle: 'Poster',
+      desc: 'Poster',
+      tools: ['Illustrator', 'Photoshop'],
+      img: 'assets/images/works/feed-eu-glycerin.jpg'
+    },
+    {
+      id: 5,
+      cat: 'feed',
+      catLabel: 'Poster',
+      title: 'Hydration Wave Poster',
+      subtitle: 'Poster',
+      desc: 'Poster',
+      tools: ['Photoshop'],
+      img: 'assets/images/works/feed-eu-ripple.jpg'
+    },
+    {
+      id: 6,
+      cat: 'feed',
+      catLabel: 'Poster',
+      title: 'Skincare Formula Poster',
+      subtitle: 'Poster',
+      desc: 'Poster',
+      tools: ['Illustrator', 'Canva'],
+      img: 'assets/images/works/feed-eu-alcohol.jpg'
+    },
+    {
+      id: 7,
+      cat: 'feed',
+      catLabel: 'Poster',
+      title: 'Monochrome Mood Poster',
+      subtitle: 'Poster',
+      desc: 'Poster',
+      tools: ['Photoshop', 'Lightroom'],
+      img: 'assets/images/works/feed-drop.jpg'
+    },
+    {
+      id: 8,
+      cat: 'feed',
+      catLabel: 'Poster',
+      title: 'Teh Pucuk Beverage Poster',
+      subtitle: 'Poster',
+      desc: 'Poster',
+      tools: ['Photoshop'],
+      img: 'assets/images/works/feed-teh-pucuk.png'
+    },
+    {
+      id: 9,
+      cat: 'feed',
+      catLabel: 'Poster',
+      title: 'Cosmetics Campaign Poster',
+      subtitle: 'Poster',
+      desc: 'Poster',
+      tools: ['Photoshop', 'Canva'],
+      img: 'assets/images/works/feed-eu-hello.jpg'
+    },
+    {
+      id: 10,
+      cat: 'feed',
+      catLabel: 'Poster',
+      title: 'AirPods Audio Poster',
+      subtitle: 'Poster',
+      desc: 'Poster',
+      tools: ['Photoshop', 'Illustrator'],
+      img: 'assets/images/works/feed-airpods.jpg'
+    },
+    {
+      id: 11,
+      cat: 'feed',
+      catLabel: 'Poster',
+      title: 'Fashion Editorial Poster',
+      subtitle: 'Poster',
+      desc: 'Poster',
+      tools: ['Photoshop', 'InDesign'],
+      img: 'assets/images/works/feed-closmain.jpg'
+    },
+    {
+      id: 12,
+      cat: 'story',
+      catLabel: 'Instagram Story',
+      title: 'Hand Sanitizer Story',
+      subtitle: 'Instagram Story',
+      desc: 'Instagram Story',
+      tools: ['Photoshop', 'Canva'],
+      img: 'assets/images/works/story-eu-bottle.jpg',
+      isContain: true
+    },
+    {
+      id: 13,
+      cat: 'story',
+      catLabel: 'Instagram Story',
+      title: 'Sold Out Announcement Story',
+      subtitle: 'Instagram Story',
+      desc: 'Instagram Story',
+      tools: ['Photoshop', 'Illustrator'],
+      img: 'assets/images/works/story-eu-soldout.jpg',
+      isContain: true
+    },
+    {
+      id: 14,
+      cat: 'idcard',
+      catLabel: 'ID Card',
+      title: 'ID Card Badge',
+      subtitle: 'ID Card',
+      desc: 'ID Card',
+      tools: ['Illustrator', 'Photoshop'],
+      img: 'assets/images/works/idcard-msp.jpg',
+      isContain: true
+    },
+    {
+      id: 15,
+      cat: 'idcard',
+      catLabel: 'Lanyard',
+      title: 'Lanyard Strap',
+      subtitle: 'Lanyard',
+      desc: 'Lanyard',
+      tools: ['Illustrator', 'InDesign'],
+      img: 'assets/images/works/lanyard-msp.png',
+      isContain: false
+    },
+    {
+      id: 16,
+      cat: 'mockup',
+      catLabel: 'Mockup',
+      title: 'Bus Stop Advertisement Mockup',
+      subtitle: 'Mockup',
+      desc: 'Mockup',
+      tools: ['Photoshop Mockup Engine'],
+      img: 'assets/images/works/mockup-bus-stop.jpg'
+    },
+    {
+      id: 17,
+      cat: 'brochure',
+      catLabel: 'Infografis',
+      title: 'Malaysia Climate Infographic',
+      subtitle: 'Infografis',
+      desc: 'Infografis',
+      tools: ['Illustrator', 'Canva'],
+      img: 'assets/images/works/infographic-iklim-malaysia.jpg',
+      isContain: true
+    },
+    {
+      id: 18,
+      cat: 'brochure',
+      catLabel: 'Brosur',
+      title: 'Tri-Fold Brochure',
+      subtitle: 'Brosur',
+      desc: 'Brosur',
+      tools: ['InDesign', 'Photoshop'],
+      img: 'assets/images/works/brochure-metschool-trifold.jpg',
+      isContain: true
+    }
+  ];
+
+  const carouselScene = document.getElementById('carousel-scene');
+  const carouselRing = document.getElementById('carousel-ring');
+  const carouselPrevBtn = document.getElementById('carousel-prev');
+  const carouselNextBtn = document.getElementById('carousel-next');
+  const filterBtns = document.querySelectorAll('.filter-btn');
+
+  // Details elements
+  const detailsCounter = document.getElementById('details-counter');
+  const detailsCatTag = document.getElementById('details-cat-tag');
+  const detailsWorkTitle = document.getElementById('details-work-title');
+  const detailsWorkDesc = document.getElementById('details-work-desc');
+  const detailsToolsList = document.getElementById('details-tools-list');
+  const detailsZoomBtn = document.getElementById('details-zoom-btn');
+
+  // Lightbox / Spotlight View elements
   const lightbox = document.getElementById('lightbox');
   const lbImg = document.getElementById('lb-img');
   const lbTitle = document.getElementById('lb-title');
+  const lbSubtitle = document.getElementById('lb-subtitle');
   const lbDesc = document.getElementById('lb-desc');
   const lbCat = document.getElementById('lb-cat');
-  const lbTools = document.getElementById('lb-tools');
   const lbClose = document.getElementById('lb-close');
-  const lbHeaderTitle = document.getElementById('lb-header-title');
 
-  cards.forEach((card) => {
-    card.addEventListener('click', () => {
-      const img = card.dataset.img;
-      const title = card.dataset.title;
-      const desc = card.dataset.desc;
-      const cat = card.querySelector('.art-badge-cat')?.textContent || 'Creative Work';
-      const tools = (card.dataset.tools || '').split(',').map((t) => t.trim());
+  function openLightbox(item) {
+    if (!lightbox || !item) return;
+    if (lbImg) {
+      lbImg.src = item.img;
+      lbImg.alt = item.title;
+    }
+    if (lbTitle) lbTitle.textContent = item.title;
+    if (lbSubtitle) lbSubtitle.textContent = item.subtitle || item.catLabel;
+    if (lbDesc) lbDesc.textContent = item.desc;
+    if (lbCat) lbCat.textContent = item.catLabel;
 
-      lbImg.src = img;
-      lbImg.alt = title;
-      lbTitle.textContent = title;
-      lbDesc.textContent = desc;
-      lbCat.textContent = cat;
-      lbHeaderTitle.textContent = `${title} — Canva Archive`;
-
-      lbTools.innerHTML = '';
-      tools.forEach((tool) => {
-        if (tool) {
-          const chip = document.createElement('span');
-          chip.className = 'lightbox-tool-chip';
-          chip.textContent = tool;
-          lbTools.appendChild(chip);
-        }
-      });
-
-      lightbox.classList.add('active');
-      document.body.style.overflow = 'hidden';
-    });
-  });
+    lightbox.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
 
   function closeLightbox() {
+    if (!lightbox) return;
     lightbox.classList.remove('active');
     document.body.style.overflow = '';
   }
 
-  lbClose.addEventListener('click', closeLightbox);
-  lightbox.addEventListener('click', (e) => {
-    if (e.target === lightbox) closeLightbox();
-  });
+  if (lbClose) lbClose.addEventListener('click', closeLightbox);
+  if (lightbox) {
+    lightbox.addEventListener('click', (e) => {
+      if (e.target === lightbox) closeLightbox();
+    });
+  }
 
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && lightbox.classList.contains('active')) {
+    if (e.key === 'Escape' && lightbox && lightbox.classList.contains('active')) {
       closeLightbox();
     }
   });
+
+  // Carousel State
+  let currentCategory = 'all';
+  let activeCardsData = [];
+  let currentIndex = 0;
+  let currentAngle = 0;
+  let currentRadius = 400;
+
+  function buildActiveCards(category) {
+    let filtered = category === 'all'
+      ? WORKS_DATA
+      : WORKS_DATA.filter((item) => item.cat === category);
+
+    if (filtered.length === 0) filtered = WORKS_DATA;
+
+    // Ensure a rich 3D cylindrical ring (minimum 6 cards)
+    let cards = [];
+    if (filtered.length === 1) {
+      for (let i = 0; i < 6; i++) {
+        cards.push({ ...filtered[0], virtualIdx: i, totalOriginal: 1, origIdx: 0 });
+      }
+    } else if (filtered.length === 2) {
+      for (let cycle = 0; cycle < 3; cycle++) {
+        filtered.forEach((item, idx) => {
+          cards.push({ ...item, virtualIdx: cards.length, totalOriginal: 2, origIdx: idx });
+        });
+      }
+    } else if (filtered.length === 3) {
+      for (let cycle = 0; cycle < 2; cycle++) {
+        filtered.forEach((item, idx) => {
+          cards.push({ ...item, virtualIdx: cards.length, totalOriginal: 3, origIdx: idx });
+        });
+      }
+    } else {
+      cards = filtered.map((item, idx) => ({
+        ...item,
+        virtualIdx: idx,
+        totalOriginal: filtered.length,
+        origIdx: idx
+      }));
+    }
+
+    return { cards, totalUnique: filtered.length };
+  }
+
+  function updateCarouselTransform(smooth = true) {
+    if (!carouselRing) return;
+    if (smooth) {
+      carouselRing.style.transition = 'transform 0.65s cubic-bezier(0.2, 0.8, 0.25, 1)';
+    } else {
+      carouselRing.style.transition = 'none';
+    }
+    carouselRing.style.transform = `translateZ(-${currentRadius}px) rotateY(${currentAngle}deg)`;
+
+    // Update active, neighbor, and distant highlights on cards for strong 3D depth
+    const cardEls = carouselRing.querySelectorAll('.carousel-card');
+    const count = activeCardsData.length;
+    cardEls.forEach((card, idx) => {
+      let dist = Math.abs(idx - currentIndex);
+      dist = Math.min(dist, count - dist); // shortest distance along ring
+
+      card.classList.remove('is-active', 'is-neighbor', 'is-distant');
+      if (dist === 0) {
+        card.classList.add('is-active');
+      } else if (dist === 1) {
+        card.classList.add('is-neighbor');
+      } else {
+        card.classList.add('is-distant');
+      }
+    });
+  }
+
+  function updateDetailsCard() {
+    if (!activeCardsData || activeCardsData.length === 0) return;
+    const currentItem = activeCardsData[currentIndex];
+    if (!currentItem) return;
+
+    const detailsCard = document.getElementById('carousel-details-card');
+
+    if (detailsCounter) {
+      const currentNum = (currentItem.origIdx + 1).toString().padStart(2, '0');
+      const totalNum = currentItem.totalOriginal.toString().padStart(2, '0');
+      detailsCounter.textContent = `${currentNum} / ${totalNum}`;
+    }
+
+    if (detailsCatTag) detailsCatTag.textContent = currentItem.catLabel;
+    if (detailsWorkTitle) detailsWorkTitle.textContent = currentItem.title;
+    if (detailsWorkDesc) detailsWorkDesc.textContent = currentItem.desc;
+
+    if (detailsToolsList) {
+      detailsToolsList.innerHTML = '';
+      currentItem.tools.forEach((t, idx) => {
+        const pill = document.createElement('span');
+        pill.className = 'details-tool-pill';
+        pill.style.animationDelay = `${0.04 + idx * 0.04}s`;
+        pill.textContent = t;
+        detailsToolsList.appendChild(pill);
+      });
+    }
+
+    if (detailsZoomBtn) {
+      detailsZoomBtn.onclick = () => openLightbox(currentItem);
+    }
+
+    // Trigger smooth entrance animation on details update
+    if (detailsCard) {
+      detailsCard.classList.remove('is-updating');
+      void detailsCard.offsetWidth; // Force CSS reflow to replay animations
+      detailsCard.classList.add('is-updating');
+    }
+  }
+
+  function renderCarousel(category, initialIndex = 0, isCategorySwitch = false) {
+    if (!carouselRing) return;
+
+    currentCategory = category;
+    const { cards } = buildActiveCards(category);
+    activeCardsData = cards;
+    currentIndex = initialIndex;
+
+    const count = cards.length;
+    const stepAngle = 360 / count;
+
+    // Calculate cylinder radius dynamically based on screen width & count
+    const isMobile = window.innerWidth <= 640;
+    const cardWidth = isMobile ? 250 : 310;
+    currentRadius = Math.max(isMobile ? 270 : 380, Math.round((cardWidth / 2) / Math.tan(Math.PI / count)) + 25);
+
+    carouselRing.innerHTML = '';
+
+    cards.forEach((item, i) => {
+      const cardEl = document.createElement('article');
+      cardEl.className = 'carousel-card';
+      if (isCategorySwitch) {
+        cardEl.classList.add('is-entering-category');
+      }
+      if (i === currentIndex) cardEl.classList.add('is-active');
+
+      const cardAngle = i * stepAngle;
+      cardEl.style.transform = `rotateY(${cardAngle}deg) translateZ(${currentRadius}px)`;
+
+      const delaySec = isCategorySwitch ? (Math.min(i, 8) * 0.042).toFixed(3) : 0;
+      const innerDelayStyle = isCategorySwitch ? `style="animation-delay: ${delaySec}s;"` : '';
+
+      cardEl.innerHTML = `
+        <div class="carousel-card-inner" ${innerDelayStyle}>
+          <div class="carousel-card-front">
+            <div class="carousel-media-wrap">
+              <span class="carousel-card-badge">${item.catLabel}</span>
+              <div class="carousel-zoom-hint" title="Zoom In"><i class="bi bi-zoom-in"></i></div>
+              <img src="${item.img}" alt="${item.title}" class="${item.isContain ? 'contain' : ''}" loading="lazy">
+            </div>
+            <div class="carousel-card-meta">
+              <h4 class="carousel-card-title">${item.title}</h4>
+              <span class="carousel-card-desc">${item.subtitle || item.catLabel}</span>
+            </div>
+          </div>
+          <div class="carousel-card-back">
+            <div class="back-stamp">
+              <span class="back-logo">KEVIN. H</span>
+              <span class="back-tag">STUDIO ARCHIVE • 2026</span>
+              <i class="bi bi-grid-3x3 back-grid-icon"></i>
+            </div>
+          </div>
+        </div>
+      `;
+
+      cardEl.addEventListener('click', (e) => {
+        if (i === currentIndex) {
+          openLightbox(item);
+        } else {
+          // Rotate to click target
+          goToIndex(i);
+        }
+      });
+
+      carouselRing.appendChild(cardEl);
+    });
+
+    currentAngle = -currentIndex * stepAngle;
+    updateCarouselTransform(false);
+    updateDetailsCard();
+
+    if (isCategorySwitch) {
+      setTimeout(() => {
+        const enteredCards = carouselRing.querySelectorAll('.carousel-card.is-entering-category');
+        enteredCards.forEach((c) => c.classList.remove('is-entering-category'));
+      }, 650);
+    }
+  }
+
+  function goToIndex(newIndex) {
+    if (!activeCardsData || activeCardsData.length === 0) return;
+    const count = activeCardsData.length;
+    currentIndex = ((newIndex % count) + count) % count;
+    const stepAngle = 360 / count;
+    currentAngle = -currentIndex * stepAngle;
+    updateCarouselTransform(true);
+    updateDetailsCard();
+  }
+
+  function rotateCarousel(delta) {
+    goToIndex(currentIndex + delta);
+  }
+
+  // Prev / Next Controls
+  if (carouselPrevBtn) {
+    carouselPrevBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      rotateCarousel(-1);
+    });
+  }
+
+  if (carouselNextBtn) {
+    carouselNextBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      rotateCarousel(1);
+    });
+  }
+
+  // Filter Buttons with Category Switch Transition
+  let categorySwitchTimeout = null;
+
+  function switchCategory(targetCategory) {
+    if (targetCategory === currentCategory && activeCardsData && activeCardsData.length > 0) return;
+
+    filterBtns.forEach((b) => {
+      if (b.dataset.filter === targetCategory) {
+        b.classList.add('active');
+      } else {
+        b.classList.remove('active');
+      }
+    });
+
+    if (categorySwitchTimeout) {
+      clearTimeout(categorySwitchTimeout);
+    }
+
+    const worksContainer = document.getElementById('works-3d-container');
+    if (worksContainer) {
+      worksContainer.classList.add('is-switching-category');
+    }
+
+    categorySwitchTimeout = setTimeout(() => {
+      categorySwitchTimeout = null;
+      renderCarousel(targetCategory, 0, true);
+      if (worksContainer) {
+        worksContainer.classList.remove('is-switching-category');
+      }
+    }, 180);
+  }
+
+  filterBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      switchCategory(btn.dataset.filter);
+    });
+  });
+
+  // Drag & Swipe Interaction
+  if (carouselScene) {
+    let isDragging = false;
+    let dragStartX = 0;
+    let dragStartAngle = 0;
+    let hasDragged = false;
+
+    carouselScene.addEventListener('pointerdown', (e) => {
+      // Don't drag if clicking buttons
+      if (e.target.closest('.carousel-arrow') || e.target.closest('.carousel-details-card')) return;
+      isDragging = true;
+      hasDragged = false;
+      dragStartX = e.clientX;
+      dragStartAngle = currentAngle;
+      carouselScene.classList.add('is-dragging');
+      carouselRing.style.transition = 'none';
+    });
+
+    window.addEventListener('pointermove', (e) => {
+      if (!isDragging) return;
+      const dx = e.clientX - dragStartX;
+      if (Math.abs(dx) > 6) {
+        hasDragged = true;
+      }
+      const count = activeCardsData.length;
+      const isMobile = window.innerWidth <= 640;
+      const cardWidth = isMobile ? 250 : 310;
+      const sensitivity = 360 / (count * cardWidth);
+      currentAngle = dragStartAngle + dx * sensitivity * 1.1;
+      carouselRing.style.transform = `translateZ(-${currentRadius}px) rotateY(${currentAngle}deg)`;
+    });
+
+    window.addEventListener('pointerup', () => {
+      if (!isDragging) return;
+      isDragging = false;
+      carouselScene.classList.remove('is-dragging');
+
+      if (hasDragged) {
+        const count = activeCardsData.length;
+        const stepAngle = 360 / count;
+        let snapIdx = Math.round(-currentAngle / stepAngle);
+        goToIndex(snapIdx);
+      }
+    });
+
+    window.addEventListener('pointercancel', () => {
+      if (!isDragging) return;
+      isDragging = false;
+      carouselScene.classList.remove('is-dragging');
+    });
+
+    // Mouse wheel horizontal rotation
+    let wheelTimer = null;
+    carouselScene.addEventListener('wheel', (e) => {
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY) || Math.abs(e.deltaY) > 20) {
+        e.preventDefault();
+        if (wheelTimer) return;
+        const dir = e.deltaX !== 0 ? Math.sign(e.deltaX) : Math.sign(e.deltaY);
+        rotateCarousel(dir);
+        wheelTimer = setTimeout(() => { wheelTimer = null; }, 320);
+      }
+    }, { passive: false });
+  }
+
+  // Keyboard navigation when works section is in view
+  window.addEventListener('keydown', (e) => {
+    if (lightbox && lightbox.classList.contains('active')) return;
+    const worksSection = document.getElementById('works');
+    if (!worksSection) return;
+    const rect = worksSection.getBoundingClientRect();
+    const isVisible = rect.top < window.innerHeight && rect.bottom > 0;
+    if (!isVisible) return;
+
+    if (e.key === 'ArrowLeft') {
+      rotateCarousel(-1);
+    } else if (e.key === 'ArrowRight') {
+      rotateCarousel(1);
+    }
+  });
+
+  // Initialize Works 3D Carousel on Load
+  renderCarousel('all', 0);
+
+  // Resize handler to recalculate radius smoothly
+  window.addEventListener('resize', () => {
+    if (activeCardsData && activeCardsData.length > 0) {
+      const isMobile = window.innerWidth <= 640;
+      const cardWidth = isMobile ? 250 : 310;
+      const count = activeCardsData.length;
+      currentRadius = Math.max(isMobile ? 270 : 380, Math.round((cardWidth / 2) / Math.tan(Math.PI / count)) + 25);
+      
+      const stepAngle = 360 / count;
+      const cardEls = carouselRing.querySelectorAll('.carousel-card');
+      cardEls.forEach((card, i) => {
+        card.style.transform = `rotateY(${i * stepAngle}deg) translateZ(${currentRadius}px)`;
+      });
+      updateCarouselTransform(false);
+    }
+  });
+
+  // Current Year
+  const currentYearEl = document.getElementById("currentYear");
+  if (currentYearEl) {
+    currentYearEl.innerText = new Date().getFullYear();
+  }
 
   // 6. Copy Buttons
   document.querySelectorAll('.copy-pill').forEach((pill) => {
