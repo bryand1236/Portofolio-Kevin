@@ -6,6 +6,13 @@
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
 
+  function isMobile() {
+    return window.innerWidth <= 820 || (window.matchMedia && window.matchMedia('(hover: none) and (pointer: coarse)').matches);
+  }
+
+  let animId = null;
+  let isRunning = false;
+
   // Config
   const DOT_SPACING = 24;
   const DOT_RADIUS = 2.8;
@@ -57,6 +64,16 @@
   }
 
   function resize() {
+    if (isMobile()) {
+      if (animId) {
+        cancelAnimationFrame(animId);
+        animId = null;
+      }
+      isRunning = false;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      return;
+    }
+
     const dpr = window.devicePixelRatio || 1;
     const w = window.innerWidth;
     cachedDocHeight = getDocHeight();
@@ -68,6 +85,10 @@
     buildGrid(w, h);
     if (wanderers.length === 0) {
       initWanderers(w, h);
+    }
+    if (!isRunning) {
+      isRunning = true;
+      animId = requestAnimationFrame(animate);
     }
   }
 
@@ -95,6 +116,12 @@
   }
 
   function animate() {
+    if (isMobile()) {
+      isRunning = false;
+      animId = null;
+      return;
+    }
+
     const w = window.innerWidth;
     const h = cachedDocHeight || window.innerHeight;
     const scrollY = window.scrollY;
@@ -216,7 +243,7 @@
 
     ctx.fill();
     ctx.globalAlpha = 1;
-    requestAnimationFrame(animate);
+    animId = requestAnimationFrame(animate);
   }
 
   // Track mouse (use document so it works even though canvas has pointer-events:none)
@@ -233,12 +260,10 @@
   // Wait for DOM + images to settle so document height is accurate
   window.addEventListener('load', function () {
     resize();
-    animate();
   });
   // Also run on DOMContentLoaded for faster first paint
   if (document.readyState === 'complete') {
     resize();
-    animate();
   }
 })();
 
@@ -484,8 +509,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!isPointerActive || hasTriggered) return;
       const dx = e.clientX - pointerStartX;
       const dy = e.clientY - pointerStartY;
-      // When dragged even slightly (>4px), immediately play the animation
-      if (Math.hypot(dx, dy) > 4) {
+      // When dragged horizontally across the perforation or with intentional movement, play animation
+      if (Math.abs(dx) > 10 || Math.hypot(dx, dy) > 14) {
         isPointerActive = false;
         playInwardTearAnimation();
       }
@@ -511,7 +536,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── Typewriter Effect for "Hello, Kevin Hermando Rama." (Looping) ──
   const typewriterTarget = document.getElementById('typewriter-text');
   if (typewriterTarget) {
-    const fullText = "Hello, Kevin Hernando Rama.";
+    const fullText = "Hello, Kevin Hernando.";
     let charIndex = 0;
     let isDeleting = false;
     const typeSpeed = 80;
@@ -593,23 +618,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   });
-
-  // Copy Link Toolbar Action
-  const btnCopyLink = document.getElementById('btn-copy-link');
-  if (btnCopyLink) {
-    btnCopyLink.addEventListener('click', () => {
-      navigator.clipboard.writeText(window.location.href);
-    });
-  }
-
-  // Find Action
-  const btnFind = document.getElementById('btn-find');
-  if (btnFind) {
-    btnFind.addEventListener('click', () => {
-      const worksSection = document.getElementById('works');
-      worksSection.scrollIntoView({ behavior: 'smooth' });
-    });
-  }
 
   // 3. Audio / Floating Media Player Controls
   if (audioEl) {
@@ -921,39 +929,162 @@ document.addEventListener('DOMContentLoaded', () => {
   const lbCat = document.getElementById('lb-cat');
   const lbClose = document.getElementById('lb-close');
 
+  let lightboxOpenedAt = 0;
+
   function openLightbox(item) {
     if (!lightbox || !item) return;
+    lightboxOpenedAt = Date.now();
+
     if (lbImg) {
       lbImg.src = item.img;
       lbImg.alt = item.title;
     }
     if (lbTitle) lbTitle.textContent = item.title;
     if (lbSubtitle) lbSubtitle.textContent = item.subtitle || item.catLabel;
-    if (lbDesc) lbDesc.textContent = item.desc;
+    if (lbDesc) {
+      lbDesc.textContent = item.desc || '';
+      lbDesc.style.display = item.desc ? 'block' : 'none';
+    }
     if (lbCat) lbCat.textContent = item.catLabel;
 
     lightbox.classList.add('active');
-    document.body.style.overflow = 'hidden';
   }
 
-  function closeLightbox() {
+  function closeLightbox(force = false) {
     if (!lightbox) return;
+    // Debounce to prevent synthetic touch / ghost click from immediately closing modal on mobile
+    if (!force && Date.now() - lightboxOpenedAt < 400) return;
+
     lightbox.classList.remove('active');
-    document.body.style.overflow = '';
   }
 
-  if (lbClose) lbClose.addEventListener('click', closeLightbox);
+  if (lbClose) {
+    lbClose.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      closeLightbox(true);
+    });
+  }
+
+  const spotlightCard = document.getElementById('spotlight-card');
+  if (spotlightCard) {
+    spotlightCard.addEventListener('click', (e) => {
+      e.stopPropagation();
+    });
+  }
+
   if (lightbox) {
     lightbox.addEventListener('click', (e) => {
-      if (e.target === lightbox) closeLightbox();
+      // Ignore click if it fired within 400ms of opening (synthetic touch/ghost click)
+      if (Date.now() - lightboxOpenedAt < 400) return;
+      if (e.target === lightbox) {
+        e.preventDefault();
+        closeLightbox(true);
+      }
     });
   }
 
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && lightbox && lightbox.classList.contains('active')) {
-      closeLightbox();
+      closeLightbox(true);
     }
   });
+
+  if (detailsZoomBtn) {
+    detailsZoomBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (activeCardsData && activeCardsData[currentIndex]) {
+        openLightbox(activeCardsData[currentIndex]);
+      }
+    });
+  }
+
+  // ── Achievement Section Filter & Lightbox Inspection ─────────────
+  (function initAchievementSection() {
+    const filterBtns = document.querySelectorAll('.achieve-filter-btn');
+    const certCards = document.querySelectorAll('.cert-card');
+
+    if (filterBtns.length > 0 && certCards.length > 0) {
+      filterBtns.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          filterBtns.forEach((b) => b.classList.remove('active'));
+          btn.classList.add('active');
+
+          const filterVal = btn.getAttribute('data-filter');
+          certCards.forEach((card) => {
+            const cardYear = card.getAttribute('data-year');
+            if (filterVal === 'all' || cardYear === filterVal) {
+              card.classList.remove('is-hidden');
+            } else {
+              card.classList.add('is-hidden');
+            }
+          });
+        });
+      });
+    }
+
+    function openCertModal(card) {
+      if (!card) return;
+      const imgEl = card.querySelector('.cert-img');
+      const title = card.getAttribute('data-title') || card.querySelector('.cert-title')?.textContent?.trim() || 'Sertifikat Penghargaan';
+      const ref = card.getAttribute('data-ref') || '';
+      const date = card.getAttribute('data-date') || '';
+      const summaryEl = card.querySelector('.cert-summary');
+      const desc = summaryEl ? summaryEl.textContent.trim() : '';
+
+      if (imgEl && typeof openLightbox === 'function') {
+        openLightbox({
+          img: imgEl.getAttribute('src') || imgEl.src,
+          title: title,
+          subtitle: `Sertifikat Penghargaan • REF: #${ref} • ${date}`,
+          desc: desc,
+          catLabel: 'CERTIFICATE • MSP'
+        });
+      }
+    }
+
+    // Attach explicit click & touch handlers for View Full Screen and Inspect buttons
+    certCards.forEach((card) => {
+      // 1. Inspect button
+      const actionBtn = card.querySelector('.cert-action-btn');
+      if (actionBtn) {
+        actionBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          openCertModal(card);
+        });
+      }
+
+      // 2. View Full Screen button / pill
+      const viewPill = card.querySelector('.cert-view-pill');
+      if (viewPill) {
+        viewPill.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          openCertModal(card);
+        });
+      }
+
+      // 3. Image wrap direct tap
+      const imgWrap = card.querySelector('.cert-image-wrap');
+      if (imgWrap) {
+        imgWrap.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          openCertModal(card);
+        });
+      }
+
+      // 4. Fallback on entire card
+      card.addEventListener('click', (e) => {
+        if (e.target.closest('.cert-action-btn') || e.target.closest('.cert-view-pill') || e.target.closest('.cert-image-wrap')) {
+          return;
+        }
+        openCertModal(card);
+      });
+    });
+  })();
 
   // Carousel State
   let currentCategory = 'all';
@@ -1326,7 +1457,16 @@ document.addEventListener('DOMContentLoaded', () => {
       e.preventDefault();
       e.stopPropagation();
       const text = pill.dataset.copy;
-      navigator.clipboard.writeText(text);
+      if (text) {
+        navigator.clipboard.writeText(text);
+        const origHTML = pill.innerHTML;
+        pill.innerHTML = '<i class="bi bi-check2"></i> Copied!';
+        pill.style.background = 'var(--accent-blue-light)';
+        setTimeout(() => {
+          pill.innerHTML = origHTML;
+          pill.style.background = '';
+        }, 1800);
+      }
     });
   });
 

@@ -14,8 +14,9 @@
     rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/css/bootstrap.min.css"
     integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
-  <!-- Bootstrap Icons -->
+  <!-- Bootstrap -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
   <!-- CSS Stylesheet -->
   <link rel="stylesheet" href="styles.css">
   
@@ -71,6 +72,9 @@
       </a>
       <a href="#works" class="side-nav-link" data-section="works">
         <i class="bi bi-grid-1x2"></i><span>Works</span>
+      </a>
+      <a href="#achievement" class="side-nav-link" data-section="achievement">
+        <i class="bi bi-trophy"></i><span>Achievements</span>
       </a>
       <a href="#contact" class="side-nav-link" data-section="contact">
         <i class="bi bi-send"></i><span>Contact</span>
@@ -148,9 +152,13 @@
         </div>
 
         <div class="year-badge-wrap">
-          <span class="year-badge">2026</span>
+          <span class="year-badge" id="currentYear"></span>
         </div>
       </div>
+
+      <script>
+        document.getElementById("currentYear").textContent = new Date().getFullYear();
+      </script>
 
       <!-- Floating Stickers Cluster -->
       <div class="sticker-cluster">
@@ -184,12 +192,6 @@
           <button class="dock-btn" data-tool="pen" title="Vector Pen (P)"><i class="bi bi-vector-pen"></i></button>
           <button class="dock-btn" data-tool="shapes" title="Shapes Tool (U)"><i class="bi bi-hexagon"></i></button>
           <button class="dock-btn" data-tool="code" title="View Source Code"><i class="bi bi-code-slash"></i></button>
-          <div class="dock-divider"></div>
-          <div class="dock-actions">
-            <button class="dock-action-btn" id="btn-find"><i class="bi bi-search"></i> Find</button>
-            <button class="dock-action-btn" id="btn-copy-link"><i class="bi bi-clipboard"></i> Copy</button>
-            <a href="#contact" class="dock-action-btn">Cut <i class="bi bi-scissors"></i></a>
-          </div>
         </nav>
         <img src="assets/images/sticker-burst.png" alt="Burst element" class="dock-burst">
       </div>
@@ -318,7 +320,7 @@
 
               <div class="timeline">
                 <div class="timeline-item">
-                  <div class="timeline-date">01 / 2025 — PRESENT</div>
+                  <div class="timeline-date">03 / 2025 — PRESENT</div>
                   <div class="timeline-title">SMK Pariwisata Metland</div>
                   <div class="timeline-desc">Visual Communication Design (DKV)</div>
                 </div>
@@ -327,7 +329,12 @@
                   <div class="timeline-date">02 / 2022 — 2025</div>
                   <div class="timeline-title">SMP Fajar Sentosa</div>
                   <div class="timeline-desc">Junior High School</div>
-                  </div>
+                </div>
+
+                <div class="timeline-item">
+                  <div class="timeline-date">01 / 2016 - 2021</div>
+                  <div class="timeline-title">SD Nurul Hikmah</div>
+                  <div class="timeline-desc">Elementary School</div>
                 </div>
               </div>
             </div>
@@ -359,6 +366,7 @@
             <div class="card-section-block">
               <div class="section-tag">SOFTWARES & TOOLS</div>
               <div class="software-tools-grid">
+                
                 <div class="software-card">
                   <div class="software-icon-frame">
                     <img src="assets/images/softwares/illustrator.png" alt="Adobe Illustrator">
@@ -413,6 +421,17 @@
                   </div>
                   </div>
                 </div>
+
+                <div class="software-card mt-2">
+                  <div class="software-icon-frame">
+                    <img src="assets/images/softwares/capcut.png" alt="Capcut">
+                  </div>
+                  <div class="software-meta">
+                    <span class="software-name">Capcut</span>
+                  </div>
+                  </div>
+                </div>
+
               </div>
             </div>
           </div>
@@ -479,6 +498,218 @@
       </div>
     </section>
 
+    <section class="achievement-section" id="achievement">
+      <!-- Section Header -->
+      <div class="achievement-header">
+        <div class="achievement-title-tag">
+          <i class="bi bi-award-fill"></i>
+          <span>HONORS &amp; CREDENTIALS</span>
+        </div>
+        <h2 class="achievement-main-title">
+          Recognitions &amp; Achievements
+          <span class="achievement-title-hand">— official credentials</span>
+        </h2>
+        <p class="achievement-desc">
+          Official certificates of appreciation awarded for active leadership, creative contribution, and event execution with Metland School Project (MSP).
+        </p>
+      </div>
+
+      <!-- Archival Stats Dossier Ribbon -->
+      <div class="achievement-stats-ribbon">
+        <div class="stat-pill-item">
+          <div class="stat-pill-icon"><i class="bi bi-trophy-fill"></i></div>
+          <div class="stat-pill-text">
+            <span class="stat-pill-num">04</span>
+            <span class="stat-pill-lbl">Official Awards</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filter Controls -->
+      <div class="achievement-filter-wrap">
+        <div class="achievement-filter-tabs" role="tablist">
+          <button class="achieve-filter-btn active" data-filter="all">All Certificates (4)</button>
+        </div>
+      </div>
+
+      <!-- Certificate Gallery Grid -->
+      <div class="achievement-grid" id="achievement-grid">
+        
+        <!-- Certificate 1: Ramadhan Sweet Of Desert -->
+        <article class="cert-card" data-year="Penghargaan" data-title="Ramadhan Sweet Of Desert" data-ref="138/MSP-MS/III/2026" data-date="12 Maret 2026">
+          <div class="cert-hanger-clip" aria-hidden="true">
+            <span class="clip-ring"></span>
+            <span class="clip-body"></span>
+          </div>
+          <div class="cert-inner-frame">
+            <div class="cert-image-wrap">
+              <img src="assets/images/achievements/cert-ramadhan-sweet-of-desert.jpg" alt="Sertifikat Ramadhan Sweet Of Desert" class="cert-img" loading="lazy">
+              <div class="cert-badge-floating gold">
+                <i class="bi bi-patch-check-fill"></i>
+                <span>VERIFIED MSP</span>
+              </div>
+              <div class="cert-hover-overlay">
+                <span class="cert-view-pill">
+                  <i class="bi bi-arrows-fullscreen"></i>
+                  <span>INSPECT FULL-RES</span>
+                </span>
+              </div>
+            </div>
+            <div class="cert-dossier">
+              <div class="cert-dossier-top">
+                <span class="cert-date-chip"><i class="bi bi-calendar3"></i> 12 Mar 2026</span>
+                <span class="cert-ref-stamp">REF: #138/MSP-MS/III/2026</span>
+              </div>
+              <h3 class="cert-title">Ramadhan Sweet Of Desert</h3>
+              <p class="cert-summary">
+                Telah berpartisipasi secara aktif dalam kegiatan "Ramadhan Sweet Of Desert" dan memberikan upaya terbaik demi acara yang diselenggarakan.
+              </p>
+              <div class="cert-footer-meta">
+                <div class="cert-issuer-info">
+                  <i class="bi bi-geo-alt-fill"></i>
+                  <span>Bogor &bull; MSP Organisasi</span>
+                </div>
+                <button class="cert-action-btn" type="button" title="Inspect Certificate Details">
+                  <span>Inspect</span>
+                  <i class="bi bi-arrow-up-right-circle"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- Certificate 2: Sweeet Of February -->
+        <article class="cert-card" data-year="Penghargaan" data-title="Sweeet Of February" data-ref="126/MSP-MS/II/2026" data-date="14 Februari 2026">
+          <div class="cert-hanger-clip" aria-hidden="true">
+            <span class="clip-ring"></span>
+            <span class="clip-body"></span>
+          </div>
+          <div class="cert-inner-frame">
+            <div class="cert-image-wrap">
+              <img src="assets/images/achievements/cert-sweet-of-february.jpg" alt="Sertifikat Sweeet Of February" class="cert-img" loading="lazy">
+              <div class="cert-badge-floating pink">
+                <i class="bi bi-patch-check-fill"></i>
+                <span>VERIFIED MSP</span>
+              </div>
+              <div class="cert-hover-overlay">
+                <span class="cert-view-pill">
+                  <i class="bi bi-arrows-fullscreen"></i>
+                  <span>INSPECT FULL-RES</span>
+                </span>
+              </div>
+            </div>
+            <div class="cert-dossier">
+              <div class="cert-dossier-top">
+                <span class="cert-date-chip"><i class="bi bi-calendar3"></i> 14 Feb 2026</span>
+                <span class="cert-ref-stamp">REF: #126/MSP-MS/II/2026</span>
+              </div>
+              <h3 class="cert-title">Sweeet Of February</h3>
+              <p class="cert-summary">
+                Telah berpartisipasi secara aktif dalam kegiatan "Sweeet Of February" dan memberikan upaya terbaik demi acara yang diselenggarakan.
+              </p>
+              <div class="cert-footer-meta">
+                <div class="cert-issuer-info">
+                  <i class="bi bi-geo-alt-fill"></i>
+                  <span>Bogor &bull; MSP Organisasi</span>
+                </div>
+                <button class="cert-action-btn" type="button" title="Inspect Certificate Details">
+                  <span>Inspect</span>
+                  <i class="bi bi-arrow-up-right-circle"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- Certificate 3: Mothers Day Dining Experience -->
+        <article class="cert-card" data-year="Penghargaan" data-title="Mothers Day Dining Experience" data-ref="092/MSP-MS/XII/2025" data-date="22 Desember 2025">
+          <div class="cert-hanger-clip" aria-hidden="true">
+            <span class="clip-ring"></span>
+            <span class="clip-body"></span>
+          </div>
+          <div class="cert-inner-frame">
+            <div class="cert-image-wrap">
+              <img src="assets/images/achievements/cert-mothers-day.jpg" alt="Sertifikat Mothers Day Dining Experience" class="cert-img" loading="lazy">
+              <div class="cert-badge-floating gold">
+                <i class="bi bi-patch-check-fill"></i>
+                <span>VERIFIED MSP</span>
+              </div>
+              <div class="cert-hover-overlay">
+                <span class="cert-view-pill">
+                  <i class="bi bi-arrows-fullscreen"></i>
+                  <span>INSPECT FULL-RES</span>
+                </span>
+              </div>
+            </div>
+            <div class="cert-dossier">
+              <div class="cert-dossier-top">
+                <span class="cert-date-chip"><i class="bi bi-calendar3"></i> 22 Des 2025</span>
+                <span class="cert-ref-stamp">REF: #092/MSP-MS/XII/2025</span>
+              </div>
+              <h3 class="cert-title">Mothers Day Dining Experience</h3>
+              <p class="cert-summary">
+                Telah berpartisipasi secara aktif dalam kegiatan "Mothers Day Dining Experience" dan memberikan upaya terbaik demi acara yang diselenggarakan.
+              </p>
+              <div class="cert-footer-meta">
+                <div class="cert-issuer-info">
+                  <i class="bi bi-geo-alt-fill"></i>
+                  <span>Bogor &bull; MSP Organisasi</span>
+                </div>
+                <button class="cert-action-btn" type="button" title="Inspect Certificate Details">
+                  <span>Inspect</span>
+                  <i class="bi bi-arrow-up-right-circle"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- Certificate 4: BOOFEST -->
+        <article class="cert-card" data-year="Penghargaan" data-title="BOOFEST" data-ref="048/MSP-MS/X/2025" data-date="31 Oktober 2025">
+          <div class="cert-hanger-clip" aria-hidden="true">
+            <span class="clip-ring"></span>
+            <span class="clip-body"></span>
+          </div>
+          <div class="cert-inner-frame">
+            <div class="cert-image-wrap">
+              <img src="assets/images/achievements/cert-boofest.jpg" alt="Sertifikat BOOFEST" class="cert-img" loading="lazy">
+              <div class="cert-badge-floating purple">
+                <i class="bi bi-patch-check-fill"></i>
+                <span>VERIFIED MSP</span>
+              </div>
+              <div class="cert-hover-overlay">
+                <span class="cert-view-pill">
+                  <i class="bi bi-arrows-fullscreen"></i>
+                  <span>INSPECT FULL-RES</span>
+                </span>
+              </div>
+            </div>
+            <div class="cert-dossier">
+              <div class="cert-dossier-top">
+                <span class="cert-date-chip"><i class="bi bi-calendar3"></i> 31 Okt 2025</span>
+                <span class="cert-ref-stamp">REF: #048/MSP-MS/X/2025</span>
+              </div>
+              <h3 class="cert-title">BOOFEST</h3>
+              <p class="cert-summary">
+                Telah berpartisipasi secara aktif dalam kegiatan "BOOFEST" pada tanggal 31 Oktober 2025 dan memberikan upaya terbaik demi acara yang diselenggarakan.
+              </p>
+              <div class="cert-footer-meta">
+                <div class="cert-issuer-info">
+                  <i class="bi bi-geo-alt-fill"></i>
+                  <span>Bogor &bull; MSP Organisasi</span>
+                </div>
+                <button class="cert-action-btn" type="button" title="Inspect Certificate Details">
+                  <span>Inspect</span>
+                  <i class="bi bi-arrow-up-right-circle"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
     <!-- Contact & Footer Section -->
     <section class="contact-section" id="contact">
       <!-- Vintage Denim Star Patch Motif -->
@@ -508,7 +739,7 @@
               <span class="contact-card-label">WhatsApp / Phone</span>
               <span class="contact-card-val">088975343391</span>
             </div>
-            <span style="position: absolute; top: 12px; right: 12px; font-size: 13px;"><i class="bi bi-arrow-up-right"></i></span>
+            <span class="contact-card-arrow" title="Open WhatsApp"><i class="bi bi-arrow-up-right"></i></span>
           </a>
         </div>
 
@@ -519,6 +750,8 @@
         </div>
       </div>
     </section>
+
+    
   </main>
 
   <!-- Floating Back to Top Button -->
@@ -537,6 +770,7 @@
       <div class="spotlight-card-meta">
         <h3 class="spotlight-title" id="lb-title">Ramadan Poster</h3>
         <span class="spotlight-subtitle" id="lb-subtitle">Poster</span>
+        <p class="spotlight-desc" id="lb-desc"></p>
       </div>
     </div>
   </div>
