@@ -4173,3 +4173,102 @@ body.is-loading {
     right: -10px;
   }
 }
+
+/* ==========================================================================
+   Mobile-Only Horizontal Overflow Lockdown (Screens <= 820px)
+   Completely prevents any sideways / horizontal scrolling on mobile
+   ========================================================================== */
+@media (max-width: 820px) {
+  html,
+  body {
+    overflow-x: hidden !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    position: relative;
+    touch-action: pan-y;
+  }
+
+  .container {
+    max-width: 100% !important;
+    width: 100% !important;
+    overflow-x: clip !important;
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Prevent 1300px header droplet image from causing right overflow */
+  .top-droplet-header {
+    max-width: 100% !important;
+    overflow: hidden !important;
+  }
+
+  .droplet-img {
+    max-width: 100% !important;
+    width: 100% !important;
+    height: auto !important;
+    top: -10px !important;
+  }
+
+  /* Contain hero sticker cluster without oversized paddings or gaps */
+  .sticker-cluster {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    gap: 12px !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    justify-content: center !important;
+    flex-wrap: wrap !important;
+  }
+
+  /* Hide dock burst element completely on mobile */
+  .dock-burst {
+    display: none !important;
+  }
+
+  /* Prevent notebook paper cover and torn paper halves from exceeding viewport */
+  .profile-academic-grid {
+    overflow-x: clip !important;
+    max-width: 100% !important;
+  }
+
+  .profile-paper-cover {
+    left: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Clip 3D rotating cards in the works carousel so they never scroll sideways */
+  .works-section {
+    overflow-x: clip !important;
+    max-width: 100% !important;
+  }
+
+  .carousel-scene {
+    overflow-x: clip !important;
+    max-width: 100% !important;
+  }
+
+  /* Contain floating media player & star patches on tablet and phone */
+  .floating-media-player {
+    left: 8px !important;
+    right: 8px !important;
+    bottom: 12px !important;
+    top: auto !important;
+    transform: none !important;
+    min-width: unset !important;
+    max-width: calc(100% - 16px) !important;
+  }
+
+  .photo-showcase-wrapper {
+    overflow: hidden;
+    max-width: 100%;
+  }
+
+  /* Achievement & contact sections containment */
+  .achievement-section,
+  .contact-section {
+    max-width: 100% !important;
+    overflow-x: clip !important;
+  }
+}
